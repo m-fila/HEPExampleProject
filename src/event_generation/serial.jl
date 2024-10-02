@@ -10,7 +10,7 @@ julia> max_weight(1e3)
 ```
 """
 function max_weight(E_in)
-    differential_cross_section(E_in,-1) 
+    differential_cross_section(E_in, -1)
 end
 
 """
@@ -35,6 +35,7 @@ flat random distribution in the cosine of the scattering angle and azimuthal ang
 
 # Example
 ```julia
+julia> using Random
 julia> rng = MersenneTwister(137)
 julia> event_list = generate_flat_events_cpu(rng, 1e3, 1000);
 ```
@@ -43,11 +44,11 @@ The `;` should be used at the end of the last promt to suppress printing the who
 # Notes
 - This method generates weighted events where the weights are derived from the differential cross section. For unweighted events, use [`generate_events_cpu`](@ref).
 """
-function generate_flat_events_cpu(rng::AbstractRNG,E_in::T,nevents::Int) where {T<:Real}
-    cth_arr = 2 .* rand(rng,nevents) .- 1
-    #
-    # FIXME: fill in the rest
-    # 
+function generate_flat_events_cpu(rng::AbstractRNG, E_in::T, nevents::Int) where {T<:Real}
+    cth_arr = 2 .* rand(rng, nevents) .- 1
+    phi_arr = 2 * π .* rand(rng, nevents)
+    weights = differential_cross_section.(Ref(E_in), cth_arr)
+    return Event.(Ref(E_in), cth_arr, phi_arr, weights)
 end
 
 
@@ -74,13 +75,27 @@ the acceptance-rejection method. The events are generated according to the
 
 # Example
 ```julia
+julia> using Random
 julia> rng = MersenneTwister(137)
 julia> unweighted_events = generate_events_cpu(rng, 1e3, 1000);
 ```
 """
-function generate_events_cpu(rng::AbstractRNG,E_in::T,nevents::Int) where {T<:Real}
-    #
-    # FIXME: fill me in
-    #
+function generate_events_cpu(rng::AbstractRNG, E_in::T, nevents::Int) where {T<:Real}
+    events = Vector{Event{T}}(undef, nevents)
+    maximal_weight = max_weight(E_in)
+    index = 1
+    while index < nevents
+        cth_trail = 2 * rand(rng) - 1
+
+        weight = differential_cross_section(E_in, cth_trail)
+
+        if weight >= rand(rng) * maximal_weight
+            phi = 2 * pi * rand(rng)
+            particles = coords_to_dict(E_in, cth_trail, phi)
+            events[index] = Event(particles, weight)
+            index += 1
+        end
+    end
+    return events
 end
 

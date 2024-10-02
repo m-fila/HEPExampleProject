@@ -54,9 +54,10 @@ Event e-e+ -> mu-mu+
 ```
 """
 struct Event{T}
-    #
-    # FIXME: add in more fields here
-    #
+    electron_momentum::FourMomentum{T}
+    positron_momentum::FourMomentum{T}
+    muon_momentum::FourMomentum{T}
+    anti_muon_momentum::FourMomentum{T}
     weight::T
 
     function Event(
@@ -65,47 +66,49 @@ struct Event{T}
         muon_momentum::FourMomentum{T},
         anti_muon_momentum::FourMomentum{T},
         weight::T) where {T<:Real}
-
-        #
-        # FIXME: add some validation 
-        #
-        return new{T}(electron_momentum,positron_momentum,muon_momentum,anti_muon_momentum,weight)
+        if weight < 0
+            throw(ArgumentError("Incorrect weight"))
+        end
+        return new{T}(electron_momentum, positron_momentum, muon_momentum, anti_muon_momentum, weight)
     end
 end
 
+
 # construct event from momentum dict
-Event(d::Dict,weight) = Event(d["e-"],d["e+"],d["mu-"],d["mu+"],weight)
+Event(d::Dict, weight) = Event(d["e-"], d["e+"], d["mu-"], d["mu+"], weight)
 
 # construct event from coordinates
-function Event(E_in::Real,cos_theta::Real,phi::Real,weight::Real)
-    #
-    # FIXME: add me 
+function Event(E_in::Real, cos_theta::Real, phi::Real, weight::Real)
+    return Event(coords_to_dict(E_in, cos_theta, phi), weight)
     #
 end
 
 # easy access of element type
-Base.eltype(::Event{T}) where T = T
+Base.eltype(::Event{T}) where {T} = T
 
 # pretty printing for events
-function Base.show(io::IO,event::Event)
-    println(io,"Event(w=$(event.weight))")
+function Base.show(io::IO, event::Event)
+    println(io, "Event(w=$(event.weight))")
     return nothing
 end
 function Base.show(io::IO, m::MIME"text/plain", event::Event)
-    println(io,"""
-            Event e-e+ -> mu-mu+
-            \telectron:  $(event.electron_momentum)
-            \tpositron:  $(event.positron_momentum)
-            \tmuon:      $(event.muon_momentum)
-            \tanti muon: $(event.anti_muon_momentum)
-            \tweight:    $(event.weight)
-            """)
+    println(
+        io,
+        """
+     Event e-e+ -> mu-mu+
+     \telectron:  $(event.electron_momentum)
+     \tpositron:  $(event.positron_momentum)
+     \tmuon:      $(event.muon_momentum)
+     \tanti muon: $(event.anti_muon_momentum)
+     \tweight:    $(event.weight)
+     """
+    )
     return nothing
 end
 
 ###
 # accessor functions
-# see FourMomentumBase.jl for a more exhaused list
+# see FourMomentumBase.jl for a more exhausted list
 ###
 
 function muon_cos_theta(event)
@@ -116,7 +119,7 @@ end
 
 function muon_rapidity(event)
     muon_mom = event.muon_momentum
-    en =  muon_mom.en
-    zcomp = muon_mom.z 
+    en = muon_mom.en
+    zcomp = muon_mom.z
     return 0.5 * log((en + zcomp) / (en - zcomp))
 end

@@ -14,9 +14,9 @@ differential cross-section for the process.
 """
 function generate_flat_event(E_in::T) where {T<:Real}
     cth = 2 * rand(T) - 1
-    #
-    # FIXME: fill in the rest
-    # 
+    phi = rand(T)
+    weight = differential_cross_section(E_in, cth)
+    return Event(E_in, cth, phi, weight)
 end
 
 """
@@ -33,12 +33,11 @@ incoming energy `E_in`.
 # Returns
 - A Boolean value indicating whether the event passes the unweighting criterion (`true` if accepted, `false` otherwise).
 """
-function build_unweighting_mask(E_in::T,event) where T
-    #
-    # FIXME: fill in the rest
-    # 
+function build_unweighting_mask(E_in::T, event) where {T}
+    maximum_weight = max_weight(E_in)
+    return event.weight >= rand(T) * maximum_weight
 end
- 
+
 """
     generate_event_and_masks(E_in)
 
@@ -54,9 +53,8 @@ a randomly scaled maximum weight (see [`build_unweighting_mask`](@ref) for detai
   - `mask`: A Boolean indicating whether the event is accepted or rejected based on its weight.
 """
 function generate_event_and_masks(E_in)
-    #
-    # FIXME: fill in the rest
-    # 
+    event = generate_flat_event(E_in)
+    return (event, build_unweighting_mask(E_in, event))
 end
 
 """
@@ -95,22 +93,22 @@ and only accepted events are retained.
 """
 function generate_events(
     E_in::T,
-    nevents; 
-    array_type::Type{ARRAY_TYPE}=Vector{T}, 
-    chunksize = 100
+    nevents;
+    array_type::Type{ARRAY_TYPE}=Vector{T},
+    chunksize=100
 ) where {
-        T<:Real,
-        ARRAY_TYPE<:AbstractVector{T}
-    }
+    T<:Real,
+    ARRAY_TYPE<:AbstractVector{T}
+}
 
     unweighted_events = Event{T}[]
-    sizehint!(unweighted_events,nevents)
+    sizehint!(unweighted_events, nevents)
 
     #
     # FIXME: add more initialization
     #
 
-    while nrun<=nevents
+    while nrun <= nevents
         #
         # FIXME: fill me in
         #
